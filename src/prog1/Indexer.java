@@ -1,6 +1,9 @@
 package prog1;
 
+import htmlparser.JTidyHTMLHandler;
+
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.FileSystems;
@@ -49,8 +52,11 @@ public class Indexer {
   }
   
   protected Document getDocument(File f) throws Exception {
-    Document doc = new Document();
-    doc.add(new TextField("contents", new FileReader(f))); //7
+    //Document doc = new Document();
+    JTidyHTMLHandler handler = new JTidyHTMLHandler();
+    org.apache.lucene.document.Document doc = handler.getDocument(
+            new FileInputStream(f));
+    //doc.add(new TextField("contents", new FileReader(f))); //7
     doc.add(new StringField("filename", f.getCanonicalPath(), //8
         Field.Store.YES));
     return doc;
@@ -74,6 +80,7 @@ public class Indexer {
     long start = System.currentTimeMillis();
     Indexer indexer = new Indexer(indexDir);
     int numIndexed = indexer.index(dataDir);
+    System.out.println(dataDir);
     indexer.close();
     long end = System.currentTimeMillis();
     System.out.println("Indexing " + numIndexed + " files took "
