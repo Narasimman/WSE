@@ -17,21 +17,11 @@ import org.apache.lucene.store.FSDirectory;
 
 
 public class Searcher {
-  public static void main(String[] args) throws Exception {
-    if (args.length != 2) {
-      throw new Exception("Usage: java " + Searcher.class.getName()
-          + " <index dir> <query>");
-    }
-    
-    String indexDir = args[0]; //1
-    String q = args[1]; //2
-    search(indexDir, q);
-  }
-  public static void search(String indexDir, String q)
+  public static String search(String indexDir, String q)
       throws Exception {
     Path path = FileSystems.getDefault().getPath(indexDir);
     Directory dir = FSDirectory.open(path);
-    
+
     IndexReader reader = DirectoryReader.open(dir);
     IndexSearcher is = new IndexSearcher(reader); //3
     QueryParser parser = new QueryParser("body", new StandardAnalyzer()); //4
@@ -43,10 +33,28 @@ public class Searcher {
         " document(s) (in " + (end - start) +
         " milliseconds) that matched query '" +
         q + "':");
+    String result = null;
+
     for(int i=0;i<hits.scoreDocs.length;i++) {
       ScoreDoc scoreDoc = hits.scoreDocs[i];
       Document doc = is.doc(scoreDoc.doc); //7
-      System.out.println(doc.get("filename")); //8
+      //System.out.println(doc.get("filename")); //8
+      //System.out.println(doc.get("title"));
+
+      result += doc.get("filename");
+
     }
+    return result;
+  }
+
+  public static void main(String[] args) throws Exception {
+    if (args.length != 2) {
+      throw new Exception("Usage: java " + Searcher.class.getName()
+          + " <index dir> <query>");
+    }
+
+    String indexDir = args[0]; //1
+    String q = args[1]; //2
+    search(indexDir, q);
   }
 }
