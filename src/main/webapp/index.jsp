@@ -4,13 +4,17 @@
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
-<title>Insert title here</title>
+<title>Xoogle - Search Engine by Narasimman</title>
 </head>
 <body>
-    <h1>Noogle - New Gen Search Engine</h1>
-	<form action="search">
-	    <input type="text" name="q"/>
-	    <input type="submit" value="search"/>
-	</form>
+    <div style="margin-top: 200px; text-align: center; margin:auto; width: 80%">
+	    <h1>Noogle - New Gen Search Engine</h1>
+	    
+		<form action="search">
+		    <input type="text" name="q" style="width: 50%; height: 40px;"/>
+		    <input type="submit" value="search" style="height: 40px; width: 10%; font-size: 1.1em;"/>
+		</form>
+		<p>Powered by Narasimman</p>
+	</div>
 </body>
 </html>
