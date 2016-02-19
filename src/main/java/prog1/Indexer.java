@@ -27,7 +27,7 @@ public class Indexer {
   }
   
   public void close() throws IOException {
-    writer.close(); //4
+    writer.close();
   }
   
   public int index(String dataDir) throws Exception {
@@ -42,20 +42,24 @@ public class Indexer {
         indexFile(f);
       }
     }
-    return writer.numDocs(); //5
+    return writer.numDocs();
   }
   
-  protected boolean acceptFile(File f) { //6
-    return f.getName().endsWith(".html");
+  protected boolean acceptFile(File f) {
+    return f.getName().endsWith(".html") || f.getName().endsWith(".htm");
   }
   
+  /**
+   * 
+   * @param f
+   * @return
+   * @throws Exception
+   */
   protected Document getDocument(File f) throws Exception {
-    //Document doc = new Document();
     JTidyHTMLHandler handler = new JTidyHTMLHandler();
     org.apache.lucene.document.Document doc = handler.getDocument(
             new FileInputStream(f));
-    //doc.add(new TextField("contents", new FileReader(f))); //7
-    doc.add(new StringField("filename", f.getCanonicalPath(), //8
+    doc.add(new StringField("filename", f.getCanonicalPath(),
         Field.Store.YES));
     return doc;
   }
@@ -64,7 +68,7 @@ public class Indexer {
     System.out.println("Indexing " + f.getCanonicalPath());
     Document doc = getDocument(f);
     if (doc != null) {
-      writer.addDocument(doc); //9
+      writer.addDocument(doc);
     }
   }
   
@@ -73,8 +77,8 @@ public class Indexer {
       throw new Exception("Usage: java " + Indexer.class.getName()
           + " <index dir> <data dir>");
     }
-    String indexDir = args[0]; //1
-    String dataDir = args[1]; //2
+    String indexDir = args[0];
+    String dataDir = args[1];
     long start = System.currentTimeMillis();
     Indexer indexer = new Indexer(indexDir);
     int numIndexed = indexer.index(dataDir);

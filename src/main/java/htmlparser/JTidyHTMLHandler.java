@@ -27,6 +27,11 @@ public class JTidyHTMLHandler {
                 new org.apache.lucene.document.Document();
 
         String title = getTitle(rawDoc);
+        
+        if(title.length() <= 0) {
+          title = getHeading(rawDoc);
+        }
+        
         String body = getBody(rawDoc);
         if ((title != null) && (!title.equals(""))) {
             doc.add(new TextField("title", title, Field.Store.YES));
@@ -79,6 +84,25 @@ public class JTidyHTMLHandler {
             body = getText(children.item(0));
         }
         return body;
+    }
+    
+    /**
+     * Gets the body text of the HTML document.
+     *
+     * @rawDoc the DOM Element to extract body Node from
+     * @return the body text
+     */
+    protected String getHeading(Element rawDoc) {
+        if (rawDoc == null) {
+            return null;
+        }
+
+        String heading = "";
+        NodeList children = rawDoc.getElementsByTagName("h1");
+        if (children.getLength() > 0) {
+            heading = getText(children.item(0));
+        }
+        return heading;
     }
 
     /**
