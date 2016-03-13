@@ -19,20 +19,20 @@ public class WebCrawler {
 	private CommandLine cmd = null;
 
 	// URLs to be searched
-	Vector<URL> newURLs;
+	PriorityQueue<Link> newURLs;
 	// Known URLs
-	Hashtable<URL,Integer> knownURLs;
+	Hashtable<Link,Integer> knownURLs;
 	// max number of pages to download
 	int maxPages; 
 
-	
+
 	public WebCrawler(String[] argv) {
 		//set options
 		options.addOption("u", true, "URL");
 		options.addOption("q", false, "Query");
 		options.addOption("docs", false, "Directory to download saved files");
 		options.addOption("m", false, "Max pages to download");
-		
+
 		CommandLineParser parser = new DefaultParser();
 		try {
 			cmd = parser.parse(options, argv);
@@ -40,7 +40,7 @@ public class WebCrawler {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
+
 	}
 
 	/**
@@ -49,20 +49,24 @@ public class WebCrawler {
 	 */
 	public void initialize() {
 		URL url;
-		knownURLs = new Hashtable<URL,Integer>();
-		newURLs = new Vector<URL>();
+		Link link;
+		knownURLs = new Hashtable<Link,Integer>();
+		
+		URLScoreComparator comparator = new URLScoreComparator();
+		newURLs = new PriorityQueue<Link>(SEARCH_LIMIT, comparator);
 		String o_url = cmd.getOptionValue("u");
 		String o_max = cmd.getOptionValue("m");
 		try { 
-			
-			url = new URL(o_url); 
+
+			url = new URL(o_url);
+			link = new Link(url);
 		}
 		catch (MalformedURLException e) {
 			System.out.println("Invalid starting URL " + o_url);
 			return;
 		}
-		knownURLs.put(url,new Integer(1));
-		newURLs.addElement(url);
+		knownURLs.put(link,new Integer(1));
+		newURLs.add(link);
 		System.out.println("Starting search: Initial URL " + url.toString());
 		maxPages = SEARCH_LIMIT;
 		if (o_max != null && !o_max.isEmpty()) {
@@ -73,8 +77,7 @@ public class WebCrawler {
 		}
 		System.out.println("Maximum number of pages:" + maxPages);
 
-		/*Behind a firewall set your proxy and port here!
-		 */
+		/* Behind a firewall set your proxy and port here! */
 		Properties props= new Properties(System.getProperties());
 		props.put("http.proxySet", "true");
 		props.put("http.proxyHost", "webcache-cup");
@@ -154,17 +157,22 @@ public class WebCrawler {
 	 */	
 	public void addnewurl(URL oldURL, String newUrlString) { 
 		URL url; 
+		Link link;
 		if (DEBUG) System.out.println("URL String " + newUrlString);
-		try { url = new URL(oldURL,newUrlString);
-		if (!knownURLs.containsKey(url)) {
-			String filename =  url.getFile();
-			int iSuffix = filename.lastIndexOf("htm");
-			if ((iSuffix == filename.length() - 3) ||
-					(iSuffix == filename.length() - 4)) {
-				knownURLs.put(url,new Integer(1));
-				newURLs.addElement(url);
-				System.out.println("Found new URL " + url.toString());
-			} } }
+		try { 
+			url = new URL(oldURL,newUrlString);
+			link = new Link(url);
+			if (!knownURLs.containsKey(link)) {
+				String filename =  url.getFile();
+				int iSuffix = filename.lastIndexOf("htm");
+				if ((iSuffix == filename.length() - 3) ||
+						(iSuffix == filename.length() - 4)) {
+					knownURLs.put(link,new Integer(1));
+					newURLs.add(link);
+					System.out.println("Found new URL " + url.toString());
+				}
+			} 
+		}
 		catch (MalformedURLException e) { return; }
 	}
 
@@ -213,16 +221,18 @@ public class WebCrawler {
 			ihref = lcPage.indexOf("href",index);
 			if (ihref != -1) {
 				iURL = lcPage.indexOf("\"", ihref) + 1; 
-				if ((iURL != -1) && (iEndAngle != -1) && (iURL < iEndAngle))
-				{ iCloseQuote = lcPage.indexOf("\"",iURL);
-				iHatchMark = lcPage.indexOf("#", iURL);
-				if ((iCloseQuote != -1) && (iCloseQuote < iEndAngle)) {
-					iEnd = iCloseQuote;
-					if ((iHatchMark != -1) && (iHatchMark < iCloseQuote))
-						iEnd = iHatchMark;
-					String newUrlString = page.substring(iURL,iEnd);
-					addnewurl(url, newUrlString); 
-				} } }
+				if ((iURL != -1) && (iEndAngle != -1) && (iURL < iEndAngle)) {
+					iCloseQuote = lcPage.indexOf("\"",iURL);
+					iHatchMark = lcPage.indexOf("#", iURL);
+					if ((iCloseQuote != -1) && (iCloseQuote < iEndAngle)) {
+						iEnd = iCloseQuote;
+						if ((iHatchMark != -1) && (iHatchMark < iCloseQuote))
+							iEnd = iHatchMark;
+						String newUrlString = page.substring(iURL,iEnd);
+						addnewurl(url, newUrlString); 
+					} 
+				} 
+			}
 			index = iEndAngle;
 		}
 	}
@@ -234,8 +244,10 @@ public class WebCrawler {
 	public void run() {
 		initialize();
 		for (int i = 0; i < maxPages; i++) {
-			URL url = newURLs.elementAt(0);
-			newURLs.removeElementAt(0);
+			
+			Link link = newURLs.peek();
+			URL url = link.getUrl();
+			newURLs.poll();
 			if (DEBUG) System.out.println("Searching " + url.toString());
 			if (robotSafe(url)) {
 				String page = getpage(url);
@@ -248,8 +260,7 @@ public class WebCrawler {
 	} 
 
 	public static void main(String[] argv) {
-		WebCrawler wc = new WebCrawler(argv);
-		
+		WebCrawler wc = new WebCrawler(argv);		
 		wc.run();
 	}
 }
