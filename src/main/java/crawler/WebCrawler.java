@@ -1,4 +1,4 @@
-package prog1;
+package crawler;
 
 import java.util.*;
 import java.net.*;
@@ -11,10 +11,12 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
 public class WebCrawler {
-	public static final int    SEARCH_LIMIT = 20;  // Absolute max pages 
+	public static final int    SEARCH_LIMIT = 50;  // Absolute max pages 
 	public static final boolean DEBUG = false;
 	public static final String DISALLOW = "Disallow:";
-	public static final int MAXSIZE = 20000; // Max size of file 
+	public static final int MAXSIZE = 100000; // Max size of file 
+	
+	private String downloadPath;
 	private Options options = new Options();
 	private CommandLine cmd = null;
 
@@ -25,12 +27,11 @@ public class WebCrawler {
 	// max number of pages to download
 	int maxPages; 
 
-
 	public WebCrawler(String[] argv) {
 		//set options
 		options.addOption("u", true, "URL");
 		options.addOption("q", false, "Query");
-		options.addOption("docs", false, "Directory to download saved files");
+		options.addOption("docs", true, "Directory to download saved files");
 		options.addOption("m", false, "Max pages to download");
 
 		CommandLineParser parser = new DefaultParser();
@@ -75,6 +76,9 @@ public class WebCrawler {
 				maxPages = iPages; 
 			}
 		}
+		
+		downloadPath = cmd.getOptionValue("docs");
+		
 		System.out.println("Maximum number of pages:" + maxPages);
 
 		/* Behind a firewall set your proxy and port here! */
@@ -236,6 +240,26 @@ public class WebCrawler {
 			index = iEndAngle;
 		}
 	}
+	
+	private void downloadPage(String filename, String content) {
+		Writer writer = null;
+		File file  = new File(downloadPath + filename);
+		File parent = file.getParentFile();
+		
+		if(!parent.exists()) {
+			parent.mkdirs();
+		}
+		
+		try {
+		    writer = new BufferedWriter(new OutputStreamWriter(
+		          new FileOutputStream(file), "utf-8"));
+		    writer.write(content);
+		} catch (IOException ex) {
+		  ex.printStackTrace();
+		} finally {
+		   try {writer.close();} catch (Exception ex) {/*ignore*/}
+		}
+	}
 
 	/**
 	 * Top-level procedure. Keep popping a url off newURLs, download it, and accumulate new URLs
@@ -251,8 +275,11 @@ public class WebCrawler {
 			if (DEBUG) System.out.println("Searching " + url.toString());
 			if (robotSafe(url)) {
 				String page = getpage(url);
+				downloadPage(url.getPath(), page);
 				if (DEBUG) System.out.println(page);
-				if (page.length() != 0) processpage(url,page);
+				if (page.length() != 0) { 
+					processpage(url,page);
+				}
 				if (newURLs.isEmpty()) break;
 			}
 		}

@@ -1,4 +1,4 @@
-package prog1;
+package crawler;
 
 import java.net.URL;
 
