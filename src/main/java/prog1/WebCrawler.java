@@ -4,11 +4,19 @@ import java.util.*;
 import java.net.*;
 import java.io.*;
 
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.DefaultParser;
+import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
+
 public class WebCrawler {
 	public static final int    SEARCH_LIMIT = 20;  // Absolute max pages 
 	public static final boolean DEBUG = false;
 	public static final String DISALLOW = "Disallow:";
 	public static final int MAXSIZE = 20000; // Max size of file 
+	private Options options = new Options();
+	private CommandLine cmd = null;
 
 	// URLs to be searched
 	Vector<URL> newURLs;
@@ -17,26 +25,48 @@ public class WebCrawler {
 	// max number of pages to download
 	int maxPages; 
 
+	
+	public WebCrawler(String[] argv) {
+		//set options
+		options.addOption("u", true, "URL");
+		options.addOption("q", false, "Query");
+		options.addOption("docs", false, "Directory to download saved files");
+		options.addOption("m", false, "Max pages to download");
+		
+		CommandLineParser parser = new DefaultParser();
+		try {
+			cmd = parser.parse(options, argv);
+		} catch (ParseException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+	}
 
 	/**
 	 * initializes data structures.  argv is the command line arguments.
 	 * @param argv
 	 */
-	public void initialize(String[] argv) {
+	public void initialize() {
 		URL url;
 		knownURLs = new Hashtable<URL,Integer>();
 		newURLs = new Vector<URL>();
-		try { url = new URL(argv[0]); }
+		String o_url = cmd.getOptionValue("u");
+		String o_max = cmd.getOptionValue("m");
+		try { 
+			
+			url = new URL(o_url); 
+		}
 		catch (MalformedURLException e) {
-			System.out.println("Invalid starting URL " + argv[0]);
+			System.out.println("Invalid starting URL " + o_url);
 			return;
 		}
 		knownURLs.put(url,new Integer(1));
 		newURLs.addElement(url);
 		System.out.println("Starting search: Initial URL " + url.toString());
 		maxPages = SEARCH_LIMIT;
-		if (argv.length > 1) {
-			int iPages = Integer.parseInt(argv[1]);
+		if (o_max != null && !o_max.isEmpty()) {
+			int iPages = Integer.parseInt(o_max);
 			if (iPages < maxPages) {
 				maxPages = iPages; 
 			}
@@ -148,8 +178,7 @@ public class WebCrawler {
 			urlConnection.setAllowUserInteraction(false);
 
 			InputStream urlStream = url.openStream();
-			// search the input stream for links
-			// first, read in the entire URL
+			// search the input stream for links. first, read in the entire URL
 			byte b[] = new byte[1000];
 			int numRead = urlStream.read(b);
 			String content = new String(b, 0, numRead);
@@ -202,8 +231,8 @@ public class WebCrawler {
 	 * Top-level procedure. Keep popping a url off newURLs, download it, and accumulate new URLs
 	 * @param argv
 	 */
-	public void run(String[] argv) {
-		initialize(argv);
+	public void run() {
+		initialize();
 		for (int i = 0; i < maxPages; i++) {
 			URL url = newURLs.elementAt(0);
 			newURLs.removeElementAt(0);
@@ -218,8 +247,9 @@ public class WebCrawler {
 		System.out.println("Search complete.");
 	} 
 
-	public static void main(String[] argv) { 
-		WebCrawler wc = new WebCrawler();
-		wc.run(argv);
+	public static void main(String[] argv) {
+		WebCrawler wc = new WebCrawler(argv);
+		
+		wc.run();
 	}
 }
