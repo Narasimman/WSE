@@ -5,10 +5,12 @@ import java.net.URL;
 public class Link {
 	private final URL url;
 	private int score;
+	private final String anchor;
 	
-	public Link(URL url) {
+	public Link(URL url, String anchor) {
 		this.url = url;
 		this.score = 0;
+		this.anchor = anchor;
 	}
 	
 	public URL getUrl() {
@@ -17,5 +19,9 @@ public class Link {
 	
 	public int getScore() {
 		return score;
+	}
+	
+	public String getAnchor() {
+		return anchor;
 	}
 }

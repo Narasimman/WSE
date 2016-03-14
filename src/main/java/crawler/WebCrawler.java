@@ -12,13 +12,13 @@ import org.apache.commons.cli.ParseException;
 
 public class WebCrawler {
 	public static final int    SEARCH_LIMIT = 50;  // Absolute max pages 
-	public static final boolean DEBUG = false;
+	public static final boolean DEBUG = true;
 	public static final String DISALLOW = "Disallow:";
 	public static final int MAXSIZE = 100000; // Max size of file 
-	
+
 	private String downloadPath;
-	private Options options = new Options();
 	private CommandLine cmd = null;
+	private final String query;
 
 	// URLs to be searched
 	PriorityQueue<Link> newURLs;
@@ -29,6 +29,7 @@ public class WebCrawler {
 
 	public WebCrawler(String[] argv) {
 		//set options
+		Options options = new Options();
 		options.addOption("u", true, "URL");
 		options.addOption("q", false, "Query");
 		options.addOption("docs", true, "Directory to download saved files");
@@ -42,6 +43,8 @@ public class WebCrawler {
 			e.printStackTrace();
 		}
 
+		query = cmd.getOptionValue("q");
+		
 	}
 
 	/**
@@ -52,15 +55,16 @@ public class WebCrawler {
 		URL url;
 		Link link;
 		knownURLs = new Hashtable<Link,Integer>();
-		
+
 		URLScoreComparator comparator = new URLScoreComparator();
 		newURLs = new PriorityQueue<Link>(SEARCH_LIMIT, comparator);
+		
 		String o_url = cmd.getOptionValue("u");
 		String o_max = cmd.getOptionValue("m");
 		try { 
 
 			url = new URL(o_url);
-			link = new Link(url);
+			link = new Link(url, "");
 		}
 		catch (MalformedURLException e) {
 			System.out.println("Invalid starting URL " + o_url);
@@ -76,9 +80,9 @@ public class WebCrawler {
 				maxPages = iPages; 
 			}
 		}
-		
+
 		downloadPath = cmd.getOptionValue("docs");
-		
+
 		System.out.println("Maximum number of pages:" + maxPages);
 
 		/* Behind a firewall set your proxy and port here! */
@@ -108,8 +112,11 @@ public class WebCrawler {
 			return false;
 		}
 
-		if (DEBUG) System.out.println("Checking robot protocol " + 
-				urlRobot.toString());
+		if (DEBUG) {
+			System.out.println("Checking robot protocol " +
+					urlRobot.toString());
+		}
+				
 		String strCommands;
 		try {
 			InputStream urlRobotStream = urlRobot.openStream();
@@ -159,13 +166,13 @@ public class WebCrawler {
 	 * htm or html. oldURL is the context, newURLString is the link
 	 * 	(either an absolute or a relative URL).
 	 */	
-	public void addnewurl(URL oldURL, String newUrlString) { 
+	public void addnewurl(URL oldURL, String newUrlString, String anchor) { 
 		URL url; 
 		Link link;
 		if (DEBUG) System.out.println("URL String " + newUrlString);
 		try { 
 			url = new URL(oldURL,newUrlString);
-			link = new Link(url);
+			link = new Link(url, anchor);
 			if (!knownURLs.containsKey(link)) {
 				String filename =  url.getFile();
 				int iSuffix = filename.lastIndexOf("htm");
@@ -206,7 +213,38 @@ public class WebCrawler {
 		} catch (IOException e) {
 			System.out.println("ERROR: couldn't open URL ");
 			return "";
-		}  }
+		}  
+	}
+	
+	private int calculateScore(Link link, String page, String[] query) {
+		if (query.length == 0) {
+			return 0;
+		}
+		
+		String url = link.getUrl().getPath();
+		String anchor = link.getAnchor();
+		
+		int k = 0;
+		
+		for(String word : query) {
+			if(anchor.contains(word)) {
+				++k;
+			}
+		}
+		
+		if(k > 0) {
+			return k * 50;
+		}
+		
+		for (String word : query) {
+			if(url.contains(word)) {
+				return 40;
+			}
+		}
+		
+		
+		return 0;
+	}
 
 	/**
 	 * Go through page finding links to URLs.  A link is signalled
@@ -232,32 +270,15 @@ public class WebCrawler {
 						iEnd = iCloseQuote;
 						if ((iHatchMark != -1) && (iHatchMark < iCloseQuote))
 							iEnd = iHatchMark;
+						
 						String newUrlString = page.substring(iURL,iEnd);
-						addnewurl(url, newUrlString); 
+						String anchor = page.substring(iEnd + 1, lcPage.indexOf("<", iEnd));
+
+						addnewurl(url, newUrlString, anchor); 
 					} 
 				} 
 			}
 			index = iEndAngle;
-		}
-	}
-	
-	private void downloadPage(String filename, String content) {
-		Writer writer = null;
-		File file  = new File(downloadPath + filename);
-		File parent = file.getParentFile();
-		
-		if(!parent.exists()) {
-			parent.mkdirs();
-		}
-		
-		try {
-		    writer = new BufferedWriter(new OutputStreamWriter(
-		          new FileOutputStream(file), "utf-8"));
-		    writer.write(content);
-		} catch (IOException ex) {
-		  ex.printStackTrace();
-		} finally {
-		   try {writer.close();} catch (Exception ex) {/*ignore*/}
 		}
 	}
 
@@ -268,23 +289,27 @@ public class WebCrawler {
 	public void run() {
 		initialize();
 		for (int i = 0; i < maxPages; i++) {
-			
+
 			Link link = newURLs.peek();
 			URL url = link.getUrl();
 			newURLs.poll();
-			if (DEBUG) System.out.println("Searching " + url.toString());
+			if (DEBUG) {
+				System.out.println("Searching " + url.toString());
+			}
 			if (robotSafe(url)) {
 				String page = getpage(url);
-				downloadPage(url.getPath(), page);
-				if (DEBUG) System.out.println(page);
-				if (page.length() != 0) { 
+				URLDownloader.downloadPage(downloadPath + url.getPath(), page);
+				if (DEBUG) {
+					System.out.println(page);
+				}
+				if (page.length() != 0) {
 					processpage(url,page);
 				}
 				if (newURLs.isEmpty()) break;
 			}
 		}
 		System.out.println("Search complete.");
-	} 
+	}
 
 	public static void main(String[] argv) {
 		WebCrawler wc = new WebCrawler(argv);		
