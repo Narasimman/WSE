@@ -21,46 +21,45 @@ public class WebCrawler {
 	public static final boolean DEBUG = false;
 	public static final String DISALLOW = "Disallow:";
 	public static final int MAXSIZE = 100000; // Max size of file 
-	
-	private final JTidyHTMLHandler handler;
+
+	private static final JTidyHTMLHandler handler = new JTidyHTMLHandler();
 	private CommandLine cmd = null;
-	
+
 	private final String downloadPath; //-docs
 	private int maxPages; //-m
 	private final String[] query; //-q
 
 	private PriorityQueue<Link> newURLs; // URLs to be searched
 	private Hashtable<String,Integer> knownURLs; // Known URLs
-	
+
 	public WebCrawler(String[] argv) {
-		handler = new JTidyHTMLHandler();
-		
+
 		setOptions(argv);
 
 		query = cmd.getOptionValues("q");
 		downloadPath = cmd.getOptionValue("docs");
-		
-	}
-	
-	private boolean setOptions(String[] argv) {
-	//set options
-			Options options = new Options();
-			options.addOption("u", true, "URL");
-			Option qOption = new Option("q", true, "Query");
-			qOption.setArgs(Option.UNLIMITED_VALUES);
-			
-			options.addOption(qOption);
-			options.addOption("docs", true, "Directory to download saved files");
-			options.addOption("m", true, "Max pages to download");
 
-			CommandLineParser parser = new DefaultParser();
-			try {
-				cmd = parser.parse(options, argv);
-			} catch (ParseException e) {
-				return false;
-			}
-			
-			return true;
+	}
+
+	private boolean setOptions(String[] argv) {
+		//set options
+		Options options = new Options();
+		options.addOption("u", true, "URL");
+		Option qOption = new Option("q", true, "Query");
+		qOption.setArgs(Option.UNLIMITED_VALUES);
+
+		options.addOption(qOption);
+		options.addOption("docs", true, "Directory to download saved files");
+		options.addOption("m", true, "Max pages to download");
+
+		CommandLineParser parser = new DefaultParser();
+		try {
+			cmd = parser.parse(options, argv);
+		} catch (ParseException e) {
+			return false;
+		}
+
+		return true;
 	}
 
 	/**
@@ -86,7 +85,7 @@ public class WebCrawler {
 			System.out.println("Invalid starting URL " + o_url);
 			return;
 		}
-		
+
 		knownURLs.put(url.toString(),new Integer(1));
 		newURLs.add(link);
 		System.out.println("Starting search: Initial URL " + url.toString());
@@ -184,7 +183,7 @@ public class WebCrawler {
 	public void addnewurl(URL oldURL, String newUrlString, String anchor, int score) { 
 		URL url; 
 		Link link;
-		
+
 		try {
 			url = new URL(oldURL,newUrlString);
 			link = new Link(url, anchor);
@@ -218,7 +217,6 @@ public class WebCrawler {
 		String anchor = handler.getText(link).toLowerCase();
 
 		int k = 0;
-
 		for(String word : query) {
 			if(anchor.contains(word)) {
 				++k;
@@ -236,13 +234,13 @@ public class WebCrawler {
 		}
 
 		/**
-		 * #TODO:
+		 * #TODO: bug
 		 */
 		int counter = 0;
 		String textForScore = "";
-		Node ele = link.getNextSibling();
-		while(ele != null) {
-			String text = handler.getText(ele);
+		Node node = link.getNextSibling();
+		while(node != null && counter < 5) {
+			String text = handler.getText(node);
 			String[] words = text.split(" ");
 
 			for(String word : words){
@@ -250,22 +248,17 @@ public class WebCrawler {
 					textForScore += word + " ";
 					++counter;
 				}
-
 				if(counter == 5) {
 					break;
 				}
 			}
-			if(counter == 5) {
-				break;
-			}
-
-			ele = ele.getNextSibling();
+			node = node.getNextSibling();
 		}
 
 		counter = 0;
-		ele = link.getPreviousSibling();
-		while(ele != null) {
-			String text = handler.getText(ele);
+		node = link.getPreviousSibling();
+		while(node != null && counter < 5) {
+			String text = handler.getText(node);
 			String[] words = text.split(" ");			
 
 			for(int i = words.length - 1; i >= 0; --i){
@@ -277,11 +270,7 @@ public class WebCrawler {
 					break;
 				}
 			}
-			if(counter == 5) {
-				break;
-			}
-
-			ele = ele.getPreviousSibling();
+			node = node.getPreviousSibling();
 		}
 
 		int U = 0;
@@ -296,8 +285,8 @@ public class WebCrawler {
 				++V;
 			}
 		}
-		
-		return 4 * Math.abs(U) + Math.abs(V - U);
+
+		return (4 * Math.abs(U)) + Math.abs(V - U);
 	}
 
 	/**
@@ -308,7 +297,7 @@ public class WebCrawler {
 	 * @param url
 	 * @param page
 	 */
-	 public void processpage(URL url, String page) {
+	public void processpage(URL url, String page) {
 		Element doc  = null;
 		try {
 			doc  = handler.getRawDocument(page);
@@ -329,30 +318,30 @@ public class WebCrawler {
 
 	/**
 	 * Top-level procedure. Keep popping a url off newURLs, download it, and accumulate new URLs
-	 * @param argv
 	 */
 	public void run() {
 		initialize();
-		for (int i = 0; i < maxPages; i++) {
-			Link link = newURLs.peek();
+		 while(!newURLs.isEmpty() && knownURLs.size() < maxPages) {
+			Link link = newURLs.poll();
 			URL url = link.getUrl();
-			newURLs.poll();
 			if (robotSafe(url)) {
 				String page = URLDownloader.getpage(link, MAXSIZE);
 				boolean success = URLDownloader.savePage(downloadPath + url.getPath(), page);
 				knownURLs.put(url.toString(),new Integer(1));
+				
 				if(success) {
 					System.out.println("Received: " + url.toString());
 				}
-				
+
 				if(knownURLs.size() >= maxPages) {
 					break;
 				}
-				if (page.length() != 0) {
+				
+				if (page.length() > 0) {
 					processpage(url,page);
 				}
+				
 				System.out.println();
-				if (newURLs.isEmpty()) break;
 			}
 		}
 		System.out.println("Search complete.");

@@ -32,7 +32,7 @@ public class URLDownloader {
 		return true;
 	}
 
-//Download contents of URL
+	//Download contents of URL
 	public static String getpage(Link link, int maxSize)	{
 		URL url = link.getUrl();
 		try { 

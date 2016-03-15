@@ -142,8 +142,7 @@ public class JTidyHTMLHandler {
 		
 		if(children.getLength() == 0) {
 			if(node.getNodeType() == Node.TEXT_NODE) {
-				sb.append(((Text) node).getData());
-				
+				sb.append(((Text) node).getData());				
 			}
 		}
 		
@@ -166,40 +165,15 @@ public class JTidyHTMLHandler {
 		if (rawDoc == null) {
 			return null;
 		}
-
-		String title = "";
-
 		NodeList children = rawDoc.getElementsByTagName("a");
-
-		/*for (int i = 0; i < children.getLength(); ++i) {
-         System.out.println(getText(children.item(i))); 
-      	 Element titleElement = ((Element) children.item(0));
-          Text text = (Text) titleElement.getFirstChild();
-          if (text != null) {
-              title = text.getData();
-          }
-      }*/
 		return children;
 	}
 
 	public static void main(String args[]) throws Exception {
 		JTidyHTMLHandler handler = new JTidyHTMLHandler();
-
+		
 		Tidy tidy = new Tidy();
 		tidy.setQuiet(true);
-		tidy.setShowWarnings(false);
-		org.w3c.dom.Document root = tidy.parseDOM(new FileInputStream(new File("C:\\Users\\Narasimman\\workspace\\Xoogle\\courses\\spring16\\CSCI-GA.2580-001\\MarineMammal\\MarineMammal.html")), null);
-		Element rawDoc = root.getDocumentElement();
-		/*   org.apache.lucene.document.Document doc = handler.getDocument(
-                new FileInputStream(new File("C:\\Users\\Narasimman\\workspace\\Xoogle\\courses\\spring16\\CSCI-GA.2580-001\\MarineMammal\\MarineMammal.html")));
-		 */   
-		NodeList c = handler.getAnchors(rawDoc);
-		Node n = c.item(0).getNextSibling();
-		while(n != null) {
-			System.out.println(handler.getText(c.item(0)));
-			System.out.println(handler.getText(n));
-			n = n.getNextSibling();
-		}
-		
+		tidy.setShowWarnings(false);	
 	}
 }
