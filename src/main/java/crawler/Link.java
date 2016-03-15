@@ -24,4 +24,8 @@ public class Link {
 	public String getAnchor() {
 		return anchor;
 	}
+	
+	public void setScore(int s) {
+		this.score = s;
+	}
 }
