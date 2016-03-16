@@ -18,162 +18,162 @@ import java.io.StringWriter;
 
 public class JTidyHTMLHandler {
 
-	public org.apache.lucene.document.Document
-	getDocument(InputStream is) {
+  public org.apache.lucene.document.Document getDocument(InputStream is) {
 
-		Tidy tidy = new Tidy();
-		tidy.setQuiet(true);
-		tidy.setShowWarnings(false);
-		org.w3c.dom.Document root = tidy.parseDOM(is, null);
-		Element rawDoc = root.getDocumentElement();
+    Tidy tidy = new Tidy();
+    tidy.setQuiet(true);
+    tidy.setShowWarnings(false);
+    org.w3c.dom.Document root = tidy.parseDOM(is, null);
+    Element rawDoc = root.getDocumentElement();
 
-		org.apache.lucene.document.Document doc =
-				new org.apache.lucene.document.Document();
+    org.apache.lucene.document.Document doc = new org.apache.lucene.document.Document();
 
-		String title = getTitle(rawDoc);
+    String title = getTitle(rawDoc);
 
-		if(title.length() <= 0) {
-			title = getHeading(rawDoc);
-		}
+    if (title.length() <= 0) {
+      title = getHeading(rawDoc);
+    }
 
-		String body = getBody(rawDoc);
-		if ((title != null) && (!title.equals(""))) {
-			doc.add(new TextField("title", title, Field.Store.YES));
-		}
-		if ((body != null) && (!body.equals(""))) {
-			doc.add(new TextField("body", body, Field.Store.YES));
-		}
+    String body = getBody(rawDoc);
+    if ((title != null) && (!title.equals(""))) {
+      doc.add(new TextField("title", title, Field.Store.YES));
+    }
+    if ((body != null) && (!body.equals(""))) {
+      doc.add(new TextField("body", body, Field.Store.YES));
+    }
 
-		return doc;
-	}
+    return doc;
+  }
 
-	public Element getRawDocument(String page) throws FileNotFoundException {
-		Tidy tidy = new Tidy();
-		tidy.setQuiet(true);
-		tidy.setShowWarnings(false);
-		org.w3c.dom.Document root = tidy.parseDOM(new StringReader(page), null);
-		Element rawDoc = root.getDocumentElement();
+  public Element getRawDocument(String page) throws FileNotFoundException {
+    Tidy tidy = new Tidy();
+    tidy.setQuiet(true);
+    tidy.setShowWarnings(false);
+    org.w3c.dom.Document root = tidy.parseDOM(new StringReader(page), null);
+    Element rawDoc = root.getDocumentElement();
 
-		return rawDoc;
-	}
+    return rawDoc;
+  }
 
-	public Document parseWebPage(String page) {
-		Tidy tidy = new Tidy();
-		tidy.setQuiet(true);
-		tidy.setShowWarnings(false);
-		org.w3c.dom.Document root = tidy.parseDOM(new StringReader(page), new StringWriter());
-		Element rawDoc = root.getDocumentElement();
-		getAnchors(rawDoc);
-		return root;
+  public Document parseWebPage(String page) {
+    Tidy tidy = new Tidy();
+    tidy.setQuiet(true);
+    tidy.setShowWarnings(false);
+    org.w3c.dom.Document root = tidy.parseDOM(new StringReader(page),
+        new StringWriter());
+    Element rawDoc = root.getDocumentElement();
+    getAnchors(rawDoc);
+    return root;
 
-	}
+  }
 
-	/**
-	 * Gets the title text of the HTML document.
-	 *
-	 * @rawDoc the DOM Element to extract title Node from
-	 * @return the title text
-	 */
-	protected String getTitle(Element rawDoc) {
-		if (rawDoc == null) {
-			return null;
-		}
+  /**
+   * Gets the title text of the HTML document.
+   * 
+   * @rawDoc the DOM Element to extract title Node from
+   * @return the title text
+   */
+  protected String getTitle(Element rawDoc) {
+    if (rawDoc == null) {
+      return null;
+    }
 
-		String title = "";
+    String title = "";
 
-		NodeList children = rawDoc.getElementsByTagName("title");
-		if (children.getLength() > 0) {
-			Element titleElement = ((Element) children.item(0));
-			Text text = (Text) titleElement.getFirstChild();
-			if (text != null) {
-				title = text.getData();
-			}
-		}
-		return title;
-	}
+    NodeList children = rawDoc.getElementsByTagName("title");
+    if (children.getLength() > 0) {
+      Element titleElement = ((Element) children.item(0));
+      Text text = (Text) titleElement.getFirstChild();
+      if (text != null) {
+        title = text.getData();
+      }
+    }
+    return title;
+  }
 
-	/**
-	 * Gets the body text of the HTML document.
-	 *
-	 * @rawDoc the DOM Element to extract body Node from
-	 * @return the body text
-	 */
-	protected String getBody(Element rawDoc) {
-		if (rawDoc == null) {
-			return null;
-		}
+  /**
+   * Gets the body text of the HTML document.
+   * 
+   * @rawDoc the DOM Element to extract body Node from
+   * @return the body text
+   */
+  protected String getBody(Element rawDoc) {
+    if (rawDoc == null) {
+      return null;
+    }
 
-		String body = "";
-		NodeList children = rawDoc.getElementsByTagName("body");
-		if (children.getLength() > 0) {
-			body = getText(children.item(0));
-		}
-		return body;
-	}
+    String body = "";
+    NodeList children = rawDoc.getElementsByTagName("body");
+    if (children.getLength() > 0) {
+      body = getText(children.item(0));
+    }
+    return body;
+  }
 
-	/**
-	 * Gets the body text of the HTML document.
-	 *
-	 * @rawDoc the DOM Element to extract body Node from
-	 * @return the body text
-	 */
-	protected String getHeading(Element rawDoc) {
-		if (rawDoc == null) {
-			return null;
-		}
+  /**
+   * Gets the body text of the HTML document.
+   * 
+   * @rawDoc the DOM Element to extract body Node from
+   * @return the body text
+   */
+  protected String getHeading(Element rawDoc) {
+    if (rawDoc == null) {
+      return null;
+    }
 
-		String heading = "";
-		NodeList children = rawDoc.getElementsByTagName("h1");
-		if (children.getLength() > 0) {
-			heading = getText(children.item(0));
-		}
-		return heading;
-	}
+    String heading = "";
+    NodeList children = rawDoc.getElementsByTagName("h1");
+    if (children.getLength() > 0) {
+      heading = getText(children.item(0));
+    }
+    return heading;
+  }
 
-	/**
-	 * Extracts text from the DOM node.
-	 *
-	 * @param node a DOM node
-	 * @return the text value of the node
-	 */
-	public String getText(Node node) {
-		StringBuffer sb = new StringBuffer();
-		NodeList children = node.getChildNodes();
+  /**
+   * Extracts text from the DOM node.
+   * 
+   * @param node
+   *          a DOM node
+   * @return the text value of the node
+   */
+  public String getText(Node node) {
+    StringBuffer sb = new StringBuffer();
+    NodeList children = node.getChildNodes();
 
-		if(children.getLength() == 0) {
-			if(node.getNodeType() == Node.TEXT_NODE) {
-				sb.append(((Text) node).getData());				
-			}
-		}
+    if (children.getLength() == 0) {
+      if (node.getNodeType() == Node.TEXT_NODE) {
+        sb.append(((Text) node).getData());
+      }
+    }
 
-		for (int i = 0; i < children.getLength(); i++) {
-			Node child = children.item(i);
-			switch (child.getNodeType()) {
-			case Node.ELEMENT_NODE:
-				sb.append(getText(child));
-				sb.append(" ");
-				break;
-			case Node.TEXT_NODE:
-				sb.append(((Text) child).getData());
-				break;
-			}
-		}
-		return sb.toString();
-	}
+    for (int i = 0; i < children.getLength(); i++) {
+      Node child = children.item(i);
+      switch (child.getNodeType()) {
+      case Node.ELEMENT_NODE:
+        sb.append(getText(child));
+        sb.append(" ");
+        break;
+      case Node.TEXT_NODE:
+        sb.append(((Text) child).getData());
+        break;
+      }
+    }
+    return sb.toString();
+  }
 
-	public NodeList getAnchors(Element rawDoc) {
-		if (rawDoc == null) {
-			return null;
-		}
-		NodeList children = rawDoc.getElementsByTagName("a");
-		return children;
-	}
+  public NodeList getAnchors(Element rawDoc) {
+    if (rawDoc == null) {
+      return null;
+    }
+    NodeList children = rawDoc.getElementsByTagName("a");
+    return children;
+  }
 
-	public static void main(String args[]) throws Exception {
-		JTidyHTMLHandler handler = new JTidyHTMLHandler();
+  public static void main(String args[]) throws Exception {
+    JTidyHTMLHandler handler = new JTidyHTMLHandler();
 
-		Tidy tidy = new Tidy();
-		tidy.setQuiet(true);
-		tidy.setShowWarnings(false);	
-	}
+    Tidy tidy = new Tidy();
+    tidy.setQuiet(true);
+    tidy.setShowWarnings(false);
+  }
 }

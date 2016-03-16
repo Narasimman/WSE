@@ -25,8 +25,7 @@ public class Indexer {
   public Indexer(String indexDir) throws IOException {
     Path path = FileSystems.getDefault().getPath(indexDir);
     Directory dir = FSDirectory.open(path);
-    writer = new IndexWriter(dir, 
-        new IndexWriterConfig(new StandardAnalyzer()));
+    writer = new IndexWriter(dir, new IndexWriterConfig(new StandardAnalyzer()));
   }
 
   public void close() throws IOException {
@@ -35,6 +34,7 @@ public class Indexer {
 
   /**
    * If the file is valid to be indexed, add it to the writer
+   * 
    * @param dataDir
    * @return
    * @throws Exception
@@ -43,11 +43,8 @@ public class Indexer {
     File[] files = new File(dataDir).listFiles();
     for (int i = 0; i < files.length; i++) {
       File f = files[i];
-      if (!f.isDirectory() &&
-          !f.isHidden() &&
-          f.exists() &&
-          f.canRead() &&
-          acceptFile(f)) {
+      if (!f.isDirectory() && !f.isHidden() && f.exists() && f.canRead()
+          && acceptFile(f)) {
         indexFile(f);
       }
     }
@@ -66,10 +63,9 @@ public class Indexer {
    */
   protected Document getDocument(File f) throws Exception {
     JTidyHTMLHandler handler = new JTidyHTMLHandler();
-    org.apache.lucene.document.Document doc = handler.getDocument(
-        new FileInputStream(f));
-    doc.add(new StringField("filename", f.getCanonicalPath(),
-        Field.Store.YES));
+    org.apache.lucene.document.Document doc = handler
+        .getDocument(new FileInputStream(f));
+    doc.add(new StringField("filename", f.getCanonicalPath(), Field.Store.YES));
     return doc;
   }
 
@@ -90,13 +86,13 @@ public class Indexer {
     String indexPath = "index";
     String docsPath = null;
     boolean create = true;
-    
-    for(int i=0;i<args.length;i++) {
+
+    for (int i = 0; i < args.length; i++) {
       if ("-index".equals(args[i])) {
-        indexPath = args[i+1];
+        indexPath = args[i + 1];
         i++;
       } else if ("-docs".equals(args[i])) {
-        docsPath = args[i+1];
+        docsPath = args[i + 1];
         i++;
       } else if ("-update".equals(args[i])) {
         create = false;
@@ -110,10 +106,11 @@ public class Indexer {
 
     final Path docDir = Paths.get(docsPath);
     if (!Files.isReadable(docDir)) {
-      System.out.println("Document directory '" +docDir.toAbsolutePath()+ "' does not exist or is not readable, please check the path");
+      System.out.println("Document directory '" + docDir.toAbsolutePath()
+          + "' does not exist or is not readable, please check the path");
       System.exit(1);
     }
-    
+
     long start = System.currentTimeMillis();
     Indexer indexer = new Indexer(indexPath);
     int numIndexed = indexer.index(docsPath);

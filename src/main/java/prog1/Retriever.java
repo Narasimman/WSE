@@ -19,9 +19,8 @@ import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 
-
 public class Retriever {
-  public static Map<String,String> search(String indexDir, String q)
+  public static Map<String, String> search(String indexDir, String q)
       throws Exception {
     Path path = FileSystems.getDefault().getPath(indexDir);
     Directory dir = FSDirectory.open(path);
@@ -33,23 +32,19 @@ public class Retriever {
     long start = System.currentTimeMillis();
     TopDocs hits = is.search(query, 10);
     long end = System.currentTimeMillis();
-    System.err.println("Found " + hits.totalHits +
-        " document(s) (in " + (end - start) +
-        " milliseconds) that matched query '" +
-        q + "':");
-    
-    Map<String,String> result = new HashMap<String,String>();
-    
-    
-    for(int i=0; i < hits.scoreDocs.length; i++) {
+    System.err.println("Found " + hits.totalHits + " document(s) (in "
+        + (end - start) + " milliseconds) that matched query '" + q + "':");
+
+    Map<String, String> result = new HashMap<String, String>();
+
+    for (int i = 0; i < hits.scoreDocs.length; i++) {
       ScoreDoc scoreDoc = hits.scoreDocs[i];
       Document doc = is.doc(scoreDoc.doc);
-      //System.out.println(doc.get("filename"));
-      //System.out.println(doc.get("title"));
-      
-      
+      // System.out.println(doc.get("filename"));
+      // System.out.println(doc.get("title"));
+
       result.put(doc.get("title"), doc.get("filename"));
-      
+
     }
     return result;
   }
