@@ -1,4 +1,4 @@
-package crawler;
+package prog2;
 
 import java.util.Comparator;
 
@@ -8,16 +8,16 @@ public class URLScoreComparator implements Comparator<Link> {
 		if(x.getScore() > y.getScore()) {
 			return -1;
 		}
-		
+
 		if(x.getScore() < y.getScore()) {
 			return 1;
 		}
-		
+
 		/* FIFO for same score - to break ties*/
 		if(x.getId() > y.getId()) {
 			return 1;
 		} 
-		
+
 		if(x.getId() < y.getId()) {
 			return -1;
 		}

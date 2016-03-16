@@ -139,13 +139,13 @@ public class JTidyHTMLHandler {
 	public String getText(Node node) {
 		StringBuffer sb = new StringBuffer();
 		NodeList children = node.getChildNodes();
-		
+
 		if(children.getLength() == 0) {
 			if(node.getNodeType() == Node.TEXT_NODE) {
 				sb.append(((Text) node).getData());				
 			}
 		}
-		
+
 		for (int i = 0; i < children.getLength(); i++) {
 			Node child = children.item(i);
 			switch (child.getNodeType()) {
@@ -171,7 +171,7 @@ public class JTidyHTMLHandler {
 
 	public static void main(String args[]) throws Exception {
 		JTidyHTMLHandler handler = new JTidyHTMLHandler();
-		
+
 		Tidy tidy = new Tidy();
 		tidy.setQuiet(true);
 		tidy.setShowWarnings(false);	
