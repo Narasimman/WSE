@@ -30,12 +30,12 @@ public class Crawler {
 	private final boolean trace; //-t
 
 	private PriorityQueue<Link> newURLs; // URLs to be searched
-	private Hashtable<String,Link> knownURLs; // Known URLs
+	private Map<String,Link> knownURLs; // Known URLs
 
 	private int processedURLs = 0;
 
 	public Crawler(String url, String docs, String[] query, int max, boolean trace) {
-		knownURLs = new Hashtable<String,Link>();
+		knownURLs = new HashMap<String,Link>();
 		newURLs = new PriorityQueue<Link>(SEARCH_LIMIT, new URLScoreComparator());
 
 		this.startingURL = url;
