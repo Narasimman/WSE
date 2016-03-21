@@ -60,9 +60,8 @@ public class Crawler {
   }
 
   /**
-   * initializes data structures. argv is the command line arguments.
-   * 
-   * @param argv
+   * initializes data structures.
+   * loads the seed url
    */
   private void initialize() {
     URL url;
@@ -80,7 +79,7 @@ public class Crawler {
     knownURLs.put(url.toString(), link);
     newURLs.add(link);
 
-    printTrace("Crawling for " + maxPages + " pages relevant to " + query
+    printTrace("Crawling for " + maxPages + " pages relevant to " + Arrays.toString(query)
         + " starting from " + url.toString());
 
     /* Behind a firewall set your proxy and port here! */
@@ -110,7 +109,7 @@ public class Crawler {
         link = new Link(url, anchor);
         knownURLs.put(url.toString(), link);
 
-        String filename = url.getFile();
+        String filename = url.getFile();        
         int iSuffix = filename.lastIndexOf("htm");
         if ((iSuffix == filename.length() - 3)
             || (iSuffix == filename.length() - 4)) {
@@ -126,7 +125,9 @@ public class Crawler {
         link = knownURLs.get(url.toString());
         if (newURLs.contains(link)) { // Add score only if it is not yet
                                       // downloaded and still in queue
-          link.setScore(link.getScore() + score);
+          newURLs.remove(link);
+          link.setScore(link.getScore() + score);          
+          newURLs.add(link);
           printTrace("Adding " + score + " to score of " + url.toString());
         }
       }
@@ -268,8 +269,8 @@ public class Crawler {
         printTrace("Downloading " + url.toString() + " Score = "
             + link.getScore());
         String page = URLHandler.getpage(link, MAXSIZE);
-        boolean success = URLHandler.savePage(downloadPath + url.getPath(),
-            page);
+        boolean success = URLHandler.savePage(downloadPath + "/" 
+            + url.getHost() + url.getPath(), page);
         ++processedURLs;
 
         if (success) {
@@ -296,8 +297,7 @@ public class Crawler {
     qOption.setArgs(Option.UNLIMITED_VALUES);
 
     options.addOption(qOption);
-    options
-        .addOption("docs", "docs", true, "Directory to download saved files");
+    options.addOption("docs", "docs", true, "Directory to download saved files");
     options.addOption("m", "m", true, "Max pages to download");
     options.addOption("t", "t", false, "Print crawler trace");
 

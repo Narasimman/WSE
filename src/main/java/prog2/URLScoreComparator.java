@@ -24,4 +24,5 @@ public class URLScoreComparator implements Comparator<Link> {
     return 0;
   }
 
+
 }
