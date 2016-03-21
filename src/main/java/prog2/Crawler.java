@@ -12,7 +12,6 @@ import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -33,8 +32,6 @@ public class Crawler {
 
   private PriorityQueue<Link> newURLs; // URLs to be searched
   private Map<String, Link> knownURLs; // Known URLs
-
-  private int processedURLs = 0;
 
   public Crawler(String url, String docs, String[] query, int max, boolean trace) {
     knownURLs = new HashMap<String, Link>();
@@ -265,6 +262,7 @@ public class Crawler {
    * accumulate new URLs
    */
   public void run() {
+    int processedURLs = 0;
     while (!newURLs.isEmpty() && processedURLs < maxPages) {
       Link link = newURLs.poll();
       URL url = link.getUrl();
