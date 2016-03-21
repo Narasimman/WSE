@@ -1,13 +1,30 @@
 apply plugin: 'java'
 apply plugin: 'eclipse'
 apply plugin: 'war'
+apply plugin: 'application'
 
 sourceCompatibility = 1.5
-version = '1.0'
-jar {
-    manifest {
-        attributes 'Implementation-Title': 'Gradle Quickstart', 'Implementation-Version': version
+
+sourceSets {
+    main {
+        java {
+            srcDir 'src'
+        }
     }
+}
+
+task indexerjar(type: Jar) {
+    baseName = "indexer"
+    mainClassName = 'prog1.Indexer'
+    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+    with jar
+}
+
+task crawlerjar(type: Jar) {
+    baseName = "crawler"
+    mainClassName = 'prog2.Crawler'
+    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+    with jar
 }
 
 repositories {
