@@ -12,6 +12,8 @@ import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -109,11 +111,10 @@ public class Crawler {
         link = new Link(url, anchor);
         knownURLs.put(url.toString(), link);
 
-        String filename = url.getFile();        
-        int iSuffix = filename.lastIndexOf("htm");
-        if ((iSuffix == filename.length() - 3)
-            || (iSuffix == filename.length() - 4)) {
-
+        String filename = url.getFile();
+        String ext = FilenameUtils.getExtension(filename);
+        
+        if (ext.equals("html") || ext.equals("htm")) {
           if (!newURLs.contains(link)) {
             link.setScore(score);
             newURLs.add(link);
@@ -128,7 +129,9 @@ public class Crawler {
           newURLs.remove(link);
           link.setScore(link.getScore() + score);          
           newURLs.add(link);
-          printTrace("Adding " + score + " to score of " + url.toString());
+          if(score > 0) {
+            printTrace("Adding " + score + " to score of " + url.toString());
+          }
         }
       }
     } catch (MalformedURLException e) {
