@@ -33,9 +33,9 @@ public class SearchServlet extends HttpServlet {
       throws ServletException, IOException {
     try {
 
-      // Indexer indexer = new Indexer(indexDir);
-      // int numIndexed = indexer.index(dataDir);
-      // indexer.close();
+      //Indexer indexer = new Indexer(indexDir);
+      //int numIndexed = indexer.index(dataDir);
+      //indexer.close();
 
       Map<String, String> result = Retriever.search(indexDir,
           request.getParameter("q"));
