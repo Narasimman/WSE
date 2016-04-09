@@ -240,7 +240,7 @@ public class Crawler {
   private void processpage(URL url, String page) {
     Element doc = null;
     try {
-      doc = handler.getRawDocument(page);
+      doc = handler.getRawDocument(new StringReader(page));
     } catch (FileNotFoundException e) {
       e.printStackTrace();
     }

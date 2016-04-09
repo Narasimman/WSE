@@ -13,6 +13,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
+import java.io.Reader;
 import java.io.StringReader;
 import java.io.StringWriter;
 
@@ -45,11 +46,11 @@ public class JTidyHTMLHandler {
     return doc;
   }
 
-  public Element getRawDocument(String page) throws FileNotFoundException {
+  public Element getRawDocument(Reader page) throws FileNotFoundException {
     Tidy tidy = new Tidy();
     tidy.setQuiet(true);
     tidy.setShowWarnings(false);
-    org.w3c.dom.Document root = tidy.parseDOM(new StringReader(page), null);
+    org.w3c.dom.Document root = tidy.parseDOM(page, null);
     Element rawDoc = root.getDocumentElement();
 
     return rawDoc;
