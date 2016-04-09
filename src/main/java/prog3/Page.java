@@ -3,31 +3,33 @@ package prog3;
 import htmlparser.HTMLParser;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
-import prog2.Link;
-
 public class Page {
   private double base;
   private double score;
+  private double newScore;
   private String path;
   private int wordCount;
-  private List<String> outLinks;
+  private Set<String> outLinks;
+  private Map<String, Integer> outLinkScore = new HashMap<String, Integer>();
   private static int id_counter = 0;
   private final int id;
 
   public Page(File file) throws IOException {
     id = id_counter++;
-    path = file.getCanonicalPath();
+    path = file.getName();
 
     Element document = HTMLParser.parse(new FileReader(file));
     String content = HTMLParser.getText(document);
@@ -36,15 +38,37 @@ public class Page {
     }
 
     base = Math.log(wordCount)/Math.log(2);
-    
-    outLinks = new ArrayList<String>();
+
+    outLinks = new HashSet<String>();
     NodeList anchors = HTMLParser.getAnchors(document);
 
     for (int i = 0; i < anchors.getLength(); i++) {
       Element element = ((Element) anchors.item(i));
       String url = element.getAttribute("href");
+
+
+      Node parent = element.getParentNode();
+      int score = 1;
+      while(parent.getNodeName() != null && parent.getNodeName() != "html") {
+        if(parent.getNodeName().equals("b")) {
+          score++;         
+          break;
+        }
+        parent = parent.getParentNode();
+      }
+      
+      if(outLinkScore.get(url) != null) {
+        outLinkScore.put(url, outLinkScore.get(url) + score);
+      } else {
+        outLinkScore.put(url, score);
+      }
+
       outLinks.add(url);
     }    
+  }
+
+  public int getOutLinkScore(String outLink) {
+    return outLinkScore.get(outLink) == null? 0 : outLinkScore.get(outLink);
   }
 
   /**
@@ -54,17 +78,22 @@ public class Page {
     return score;
   }
 
+  public double getNewScore() {
+    return newScore;
+  }
+  
+  public void setNewScore(double s) {
+    newScore = s;
+  }
+  
   public int getId() {
     return id;
   }
-  
+
   public String getPath() {
     return path;
   }
 
-  /**
-   * @param score the score to set
-   */
   public void setScore(double score) {
     this.score = score;
   }
@@ -73,10 +102,10 @@ public class Page {
     this.base = score;
   }
 
-  public List<String> getOutLinks() {
+  public Set<String> getOutLinks() {
     return outLinks;
   }
-  
+
   public boolean hasOutLinks() {
     return outLinks.size() > 0;
   }

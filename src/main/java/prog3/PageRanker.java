@@ -7,16 +7,14 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
-import org.apache.commons.collections.map.HashedMap;
-import org.apache.lucene.search.Weight;
-
-import prog2.Link;
 
 public class PageRanker {
 
@@ -27,19 +25,19 @@ public class PageRanker {
   private final int numberOfPages;
 
   private static final double epsilonFactor = 0.01;
-  private static double epsilon;
-  private static double F;
+  private final double epsilon;
+  private final double F;
 
   private double[][] weight;
 
-  public PageRanker(String filePath, double F) {    
+  public PageRanker(String filePath, double f) {    
     collectionPath = FileSystems.getDefault().getPath(filePath);
     files = collectionPath.toFile().listFiles();
     numberOfPages = files.length;
     epsilon = epsilonFactor/numberOfPages;
-    this.F = F;
+    this.F = f;
     weight = new double[numberOfPages][numberOfPages];
-    pages = new HashMap<String, Page>();
+    pages = new TreeMap<String, Page>();
   }
 
   public void parsePages() throws IOException {
@@ -49,26 +47,40 @@ public class PageRanker {
     }
   }
 
+  private double calculateWeight(Page p, Page q) {
+    Set<String> outLinks = p.getOutLinks();
+
+    double score = 0.0;
+    String P = p.getPath();
+    String Q = q.getPath();
+    System.out.println(P + "-->" + Q);
+    for(String link : outLinks) {
+      if(link.equals(Q)) {
+        score += p.getOutLinkScore(link);
+      }
+    }
+    System.out.println("Score " + score);
+    return score;
+  }
+
   public void compute() {
     double sum = 0.0;
-    
-    //System.out.println(pages.values());
 
     for(Page page : pages.values()) {
       sum += page.getBase();
     }
 
+    // Calculate φ'
     for(Page page : pages.values()) {
       double normalizedSum = page.getBase()/sum;
       page.setScore(normalizedSum);
-      page.setBase(normalizedSum);
+      page.setBase(normalizedSum);      
     }    
-    
+
     for(String url : pages.keySet()) {
-      System.out.println("Page" + url);
       Page page = pages.get(url);
       int P = page.getId();
-      
+
       if(!page.hasOutLinks()) {
         for(String qUrl : pages.keySet()) {
           Page qPage = pages.get(qUrl);
@@ -76,69 +88,71 @@ public class PageRanker {
           weight[Q][P] = 1.0/numberOfPages;
         }
       } else {
-        List<String> outLinks = page.getOutLinks();
-        
-        int numOutLinks = outLinks.size();
-        
+        Set<String> outLinks = page.getOutLinks();
+
         for(String outLink : outLinks) {
           Page qPage = pages.get(outLink);
           int Q = qPage.getId();        
-          //System.out.println(numOutLinks);
-          weight[Q][P] = F * (1.0/numOutLinks); // not sure what the formula here
-          //System.out.println(Q + " " + P + "  :  " + F * weight[Q][P]);
+
+          double linkWeight = calculateWeight(page, qPage);
+          weight[Q][P] = linkWeight; 
+
         }
-        
+
         double qSum = 0.0;
-        
+
         for(int i = 0; i < weight.length; i++) {
           qSum += weight[i][P];
         }
-        
-        
+
+        System.out.println("Sum: "  + page.getPath() + "-->" + qSum);
         for(String outLink : outLinks) {
           Page qPage = pages.get(outLink);
-          int Q = qPage.getId();        
-          
-          weight[Q][P] = weight[Q][P]/qSum;
+          int Q = qPage.getId();
+          weight[Q][P] = weight[Q][P]/qSum;          
         }
       }
     }
   }
-  
+
   private void iterate() {
     boolean changed = true;
-    
+
     while(changed) {
       changed = false;
-      
       for(Page page : pages.values()) {
-        
-        List<String> outLinks = page.getOutLinks();
+
+        Set<String> outLinks = page.getOutLinks();
         int P = page.getId();
-        
-        double normailizedScore = 0.0;
+
+        double normalizedScore = 0.0;
+
         for(String outLink : outLinks) {
           Page qPage = pages.get(outLink);
+          System.out.println(page.getPath() + " to " + qPage.getPath());
           int Q = qPage.getId();
-          normailizedScore += (qPage.getScore() * weight[P][Q]);
+          normalizedScore += (qPage.getScore() * weight[P][Q]);
         }
-        
-        double newScore = (1.0 - F) * page.getBase() + (F * normailizedScore);
-        
-        if(Math.abs(newScore - page.getScore()) > epsilon) {
+
+        System.out.println("new score  " + normalizedScore);
+        double newScore = ((1.0 - F) * page.getBase()) + (F * normalizedScore);
+        page.setNewScore(newScore);
+
+        if(Math.abs(page.getNewScore() - page.getScore()) > epsilon) {
           changed = true;
-        } 
-        
-        page.setScore(newScore);
-        
-        
+        }
+      }
+
+
+      for(Page page : pages.values()) {
+        page.setScore(page.getNewScore());
       }
     } //while
-    
+
     for(Page page : pages.values()) {
-      System.out.println(page.getScore());
+      System.out.println(page.getPath() + "-->" + page.getScore());
     }
-    
+
   }
 
   public static void main(String[] args) throws IOException{
@@ -160,23 +174,26 @@ public class PageRanker {
 
     PageRanker pr = new PageRanker(path, F);
 
-     pr.parsePages();
-   
+    pr.parsePages();
     pr.compute();
-    
-    pr.iterate();
-    
-    
-    
+
     for(int i = 0; i < pr.weight.length; i++) {
       for(int j = 0; j < pr.weight[0].length; j++) {
         System.out.print(pr.weight[i][j] + " ");
       }
       System.out.println();
     }
-    
-    
-    
+    pr.iterate();
+    /*
+    for(int i = 0; i < pr.weight.length; i++) {
+      for(int j = 0; j < pr.weight[0].length; j++) {
+        System.out.print(pr.weight[i][j] + " ");
+      }
+      System.out.println();
+    }
+     */
+
+
 
   }
 
