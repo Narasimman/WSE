@@ -27,6 +27,13 @@ task crawlerjar(type: Jar) {
     with jar
 }
 
+task rankerjar(type: Jar) {
+    baseName = "ranker"
+    mainClassName = 'prog3.PageRanker'
+    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+    with jar
+}
+
 repositories {
     mavenCentral()
 }
