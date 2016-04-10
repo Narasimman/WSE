@@ -4,8 +4,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
@@ -51,15 +49,12 @@ public class PageRanker {
     Set<String> outLinks = p.getOutLinks();
 
     double score = 0.0;
-    String P = p.getPath();
     String Q = q.getPath();
-    System.out.println(P + "-->" + Q);
     for(String link : outLinks) {
       if(link.equals(Q)) {
         score += p.getOutLinkScore(link);
       }
     }
-    System.out.println("Score " + score);
     return score;
   }
 
@@ -105,7 +100,6 @@ public class PageRanker {
           qSum += weight[i][P];
         }
 
-        System.out.println("Sum: "  + page.getPath() + "-->" + qSum);
         for(String outLink : outLinks) {
           Page qPage = pages.get(outLink);
           int Q = qPage.getId();
@@ -121,20 +115,14 @@ public class PageRanker {
     while(changed) {
       changed = false;
       for(Page page : pages.values()) {
-
-        Set<String> outLinks = page.getOutLinks();
         int P = page.getId();
 
         double normalizedScore = 0.0;
-
-        for(String outLink : outLinks) {
-          Page qPage = pages.get(outLink);
-          System.out.println(page.getPath() + " to " + qPage.getPath());
+        for(Page qPage : pages.values()) {
           int Q = qPage.getId();
-          normalizedScore += (qPage.getScore() * weight[P][Q]);
+          normalizedScore += (qPage.getScore() * weight[P][Q]);          
         }
 
-        System.out.println("new score  " + normalizedScore);
         double newScore = ((1.0 - F) * page.getBase()) + (F * normalizedScore);
         page.setNewScore(newScore);
 
@@ -143,16 +131,10 @@ public class PageRanker {
         }
       }
 
-
       for(Page page : pages.values()) {
         page.setScore(page.getNewScore());
       }
-    } //while
-
-    for(Page page : pages.values()) {
-      System.out.println(page.getPath() + "-->" + page.getScore());
-    }
-
+    } //while    
   }
 
   public static void main(String[] args) throws IOException{
@@ -176,14 +158,6 @@ public class PageRanker {
 
     pr.parsePages();
     pr.compute();
-
-    for(int i = 0; i < pr.weight.length; i++) {
-      for(int j = 0; j < pr.weight[0].length; j++) {
-        System.out.print(pr.weight[i][j] + " ");
-      }
-      System.out.println();
-    }
-    pr.iterate();
     /*
     for(int i = 0; i < pr.weight.length; i++) {
       for(int j = 0; j < pr.weight[0].length; j++) {
@@ -191,10 +165,12 @@ public class PageRanker {
       }
       System.out.println();
     }
-     */
+     */    
 
+    pr.iterate();
 
-
+    for(Page page : pr.pages.values()) {
+      System.out.println(page.getPath() + "\t" + page.getScore());
+    }
   }
-
 }

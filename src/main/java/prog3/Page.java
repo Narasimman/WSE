@@ -5,10 +5,7 @@ import htmlparser.HTMLParser;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -21,49 +18,45 @@ public class Page {
   private double score;
   private double newScore;
   private String path;
-  private int wordCount;
-  private Set<String> outLinks;
   private Map<String, Integer> outLinkScore = new HashMap<String, Integer>();
-  private static int id_counter = 0;
   private final int id;
 
+  private static int id_counter = 0;
+  
   public Page(File file) throws IOException {
     id = id_counter++;
     path = file.getName();
 
     Element document = HTMLParser.parse(new FileReader(file));
     String content = HTMLParser.getText(document);
+
     if(content != null) {
-      wordCount = content.split(" ").length;
+      int wordCount = content.trim().split(" ").length;
+      base = Math.log(wordCount)/Math.log(2);
     }
 
-    base = Math.log(wordCount)/Math.log(2);
-
-    outLinks = new HashSet<String>();
     NodeList anchors = HTMLParser.getAnchors(document);
 
     for (int i = 0; i < anchors.getLength(); i++) {
       Element element = ((Element) anchors.item(i));
       String url = element.getAttribute("href");
 
-
       Node parent = element.getParentNode();
+
       int score = 1;
       while(parent.getNodeName() != null && parent.getNodeName() != "html") {
-        if(parent.getNodeName().equals("b")) {
+        if(parent.getNodeName().equals("b") || 
+            parent.getNodeName().equals("em") || 
+            parent.getNodeName().equals("h1") || 
+            parent.getNodeName().equals("h2") ||
+            parent.getNodeName().equals("h3")) {
           score++;         
           break;
         }
         parent = parent.getParentNode();
       }
-      
-      if(outLinkScore.get(url) != null) {
-        outLinkScore.put(url, outLinkScore.get(url) + score);
-      } else {
-        outLinkScore.put(url, score);
-      }
 
-      outLinks.add(url);
+      outLinkScore.put(url, score);      
     }    
   }
 
@@ -71,9 +64,6 @@ public class Page {
     return outLinkScore.get(outLink) == null? 0 : outLinkScore.get(outLink);
   }
 
-  /**
-   * @return the score
-   */
   public double getScore() {
     return score;
   }
@@ -81,11 +71,11 @@ public class Page {
   public double getNewScore() {
     return newScore;
   }
-  
+
   public void setNewScore(double s) {
     newScore = s;
   }
-  
+
   public int getId() {
     return id;
   }
@@ -103,24 +93,46 @@ public class Page {
   }
 
   public Set<String> getOutLinks() {
-    return outLinks;
+    return outLinkScore.keySet();
   }
 
   public boolean hasOutLinks() {
-    return outLinks.size() > 0;
+    return outLinkScore.size() > 0;
   }
 
-  /**
-   * @return the base
-   */
   public double getBase() {
     return base;
   }
 
-  /**
-   * @return the wordCount
-   */
-  public int getWordCount() {
-    return wordCount;
+  @Override
+  public int hashCode() {
+    final int prime = 31;
+    int result = 1;
+    result = prime * result + ((path == null) ? 0 : path.hashCode());
+    return result;
   }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (this == obj) {
+      return true;
+    }
+    if (obj == null) {
+      return false;
+    }
+    if (!(obj instanceof Page)) {
+      return false;
+    }
+    Page other = (Page) obj;
+    if (path == null) {
+      if (other.path != null) {
+        return false;
+      }
+    } else if (!path.equals(other.path)) {
+      return false;
+    }
+    return true;
+  }
+  
+  
 }
