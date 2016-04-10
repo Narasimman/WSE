@@ -18,7 +18,7 @@ public class Page {
   private double score;
   private double newScore;
   private String path;
-  private Map<String, Integer> outLinkScore = new HashMap<String, Integer>();
+  private Map<String, Integer> outLinks = new HashMap<String, Integer>();
   private final int id;
 
   private static int id_counter = 0;
@@ -43,7 +43,7 @@ public class Page {
 
       Node parent = element.getParentNode();
 
-      int score = 1;
+      int score = (outLinks.get(url) == null) ? 1 : outLinks.get(url) + 1;
       while(parent.getNodeName() != null && parent.getNodeName() != "html") {
         if(parent.getNodeName().equals("b") || 
             parent.getNodeName().equals("em") || 
@@ -55,13 +55,12 @@ public class Page {
         }
         parent = parent.getParentNode();
       }
-
-      outLinkScore.put(url, score);      
+      outLinks.put(url, score);      
     }    
   }
 
   public int getOutLinkScore(String outLink) {
-    return outLinkScore.get(outLink) == null? 0 : outLinkScore.get(outLink);
+    return outLinks.get(outLink) == null? 0 : outLinks.get(outLink);
   }
 
   public double getScore() {
@@ -93,11 +92,11 @@ public class Page {
   }
 
   public Set<String> getOutLinks() {
-    return outLinkScore.keySet();
+    return outLinks.keySet();
   }
 
   public boolean hasOutLinks() {
-    return outLinkScore.size() > 0;
+    return outLinks.size() > 0;
   }
 
   public double getBase() {

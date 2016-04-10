@@ -58,7 +58,7 @@ public class PageRanker {
     return score;
   }
 
-  public void compute() {
+  private void compute() {
     double sum = 0.0;
 
     for(Page page : pages.values()) {
@@ -72,13 +72,11 @@ public class PageRanker {
       page.setBase(normalizedSum);      
     }    
 
-    for(String url : pages.keySet()) {
-      Page page = pages.get(url);
+    for(Page page : pages.values()) {      
       int P = page.getId();
 
       if(!page.hasOutLinks()) {
-        for(String qUrl : pages.keySet()) {
-          Page qPage = pages.get(qUrl);
+        for(Page qPage : pages.values()) {          
           int Q = qPage.getId();          
           weight[Q][P] = 1.0/numberOfPages;
         }
@@ -88,10 +86,7 @@ public class PageRanker {
         for(String outLink : outLinks) {
           Page qPage = pages.get(outLink);
           int Q = qPage.getId();        
-
-          double linkWeight = calculateWeight(page, qPage);
-          weight[Q][P] = linkWeight; 
-
+          weight[Q][P] = calculateWeight(page, qPage);
         }
 
         double qSum = 0.0;
@@ -109,7 +104,10 @@ public class PageRanker {
     }
   }
 
-  private void iterate() {
+  private void run() {
+    // Compute the weight matrix
+    compute();
+
     boolean changed = true;
 
     while(changed) {
@@ -157,17 +155,7 @@ public class PageRanker {
     PageRanker pr = new PageRanker(path, F);
 
     pr.parsePages();
-    pr.compute();
-    /*
-    for(int i = 0; i < pr.weight.length; i++) {
-      for(int j = 0; j < pr.weight[0].length; j++) {
-        System.out.print(pr.weight[i][j] + " ");
-      }
-      System.out.println();
-    }
-     */    
-
-    pr.iterate();
+    pr.run();
 
     for(Page page : pr.pages.values()) {
       System.out.println(page.getPath() + "\t" + page.getScore());
