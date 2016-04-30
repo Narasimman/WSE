@@ -4,6 +4,7 @@ apply plugin: 'war'
 apply plugin: 'application'
 
 sourceCompatibility = 1.5
+version = '1.0'
 
 sourceSets {
     main {
@@ -30,6 +31,10 @@ task crawlerjar(type: Jar) {
 task rankerjar(type: Jar) {
     baseName = "ranker"
     mainClassName = 'prog3.PageRanker'
+    manifest {
+        attributes 'Implementation-Title': 'Web search Engine', 'Implementation-Version': version,
+        'Main-Class': 'prog3.PageRanker'
+    }
     from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
     with jar
 }
